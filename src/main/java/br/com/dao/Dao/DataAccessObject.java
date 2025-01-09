@@ -63,7 +63,7 @@ public abstract class DataAccessObject<T> implements Repositorio<T> {
 
     //METODO FIND
     @Override
-    public T getCarro(Integer id) {
+    public T findCarro(Integer id) {
         try {
             T obj = (T)this.manager.find(this.type, id);
             return obj;

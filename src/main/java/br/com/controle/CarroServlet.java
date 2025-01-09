@@ -3,7 +3,6 @@ package br.com.controle;
 import br.com.dao.Dao.CarroDAO;
 import br.com.dao.Entity.Carro;
 import br.com.dao.Interface.CarroRepositorio;
-import br.com.dao.Interface.Repositorio;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -24,39 +23,50 @@ public class CarroServlet extends HttpServlet {
     private final Gson gson = new Gson();
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json");
+
+        // Instancia o DAO
+        CarroRepositorio carroDao = new CarroDAO();
+
+        // Recupera a lista de carros do banco de dados usando o método listar() do DAO
+        List<Carro> carros = carroDao.listar();
+
+        if (carros != null && !carros.isEmpty()) {
+            // Converte a lista de carros para JSON
+            String carrosJson = gson.toJson(carros);
+
+            // Retorna a lista de carros como resposta
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().println(carrosJson);
+        } else {
+            // Caso não haja carros na base de dados
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.getWriter().println("{\"message\": \"Nenhum carro encontrado\"}");
+        }
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
 
         // Lê o corpo da requisição
         String requestBody = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
 
-        // Converte o JSON recebido em um objeto Pessoa
+        // Converte o JSON recebido em um objeto Carro
         Carro carro = gson.fromJson(requestBody, Carro.class);
-        System.out.println(carro);
+
         CarroRepositorio carroDao = new CarroDAO();
 
         if (carroDao.salvar(carro)) {
+            // Retorna um JSON limpo de sucesso
             response.setStatus(HttpServletResponse.SC_CREATED);
-            response.getWriter().println("{\"message\": \"true\"}" + "Retorno" + requestBody);
+            response.getWriter().println("{\"success\": true, \"message\": \"Carro cadastrado com sucesso\"}");
         } else {
+            // Retorna um JSON limpo de erro
             response.setStatus(HttpServletResponse.SC_CONFLICT);
-            response.getWriter().println("{\"message\": \"false\"}");
+            response.getWriter().println("{\"success\": false, \"message\": \"Erro ao cadastrar o carro\"}");
         }
-    }
-    
-        @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setContentType("application/json");
-
-        // Instancia o DAO para acessar o banco de dados
-        CarroRepositorio carroDao = new CarroDAO();
-
-        // Obtém todos os carros do banco
-        List<Carro> carros = carroDao.listar();  // Presumindo que você tenha um método 'listar' no seu DAO
-
-        // Converte a lista de carros para JSON e envia como resposta
-        String carrosJson = gson.toJson(carros);
-        response.getWriter().println(carrosJson);
     }
 
     @Override
@@ -64,7 +74,7 @@ public class CarroServlet extends HttpServlet {
         response.setContentType("application/json");
 
         // Extrai o ID do carro da URL
-        String pathInfo = request.getPathInfo(); // Obtém a parte extra da URL após '/api/pessoa/'
+        String pathInfo = request.getPathInfo();
         if (pathInfo == null || pathInfo.equals("/")) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().println("{\"message\": \"ID do carro é obrigatório\"}");
@@ -72,36 +82,34 @@ public class CarroServlet extends HttpServlet {
         }
 
         String[] pathParts = pathInfo.split("/");
-        String idString = pathParts[1];  // O ID do carro está na segunda parte da URL
-        int carroId = Integer.parseInt(idString);  // Converte o ID para inteiro
+        String idString = pathParts[1];
+        int carroId;
+
+        try {
+            carroId = Integer.parseInt(idString);
+        } catch (NumberFormatException e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().println("{\"message\": \"ID inválido\"}");
+            return;
+        }
 
         // Lê o corpo da requisição e converte o JSON para o objeto Carro
         String requestBody = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
         Carro carroAtualizado = gson.fromJson(requestBody, Carro.class);
 
-        // Instancia o DAO para acesso ao banco de dados
+        // Define o ID no objeto para garantir a consistência
+        carroAtualizado.setId(carroId);
+
+        // Instancia o DAO
         CarroRepositorio carroDao = new CarroDAO();
 
-        // Verifica se o carro existe
-        Carro carroExistente = (Carro) carroDao.getCarro(carroId);
-        if (carroExistente != null) {
-            // Atualiza os dados do carro
-            carroExistente.setModelo(carroAtualizado.getModelo());
-            carroExistente.setAno(carroAtualizado.getAno());
-            carroExistente.setCor(carroAtualizado.getCor());
-            // ... Atualize os outros campos conforme necessário
-
-            // Salva a atualização no banco de dados
-            if (carroDao.atualizar(carroExistente)) {
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().println("{\"message\": \"Carro atualizado com sucesso\"}");
-            } else {
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                response.getWriter().println("{\"message\": \"Erro ao atualizar o carro\"}");
-            }
+        // Tenta atualizar o carroF
+        if (carroDao.atualizar(carroAtualizado)) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().println("{\"message\": \"Carro atualizado com sucesso\"}");
         } else {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().println("{\"message\": \"Carro não encontrado\"}");
+            response.getWriter().println("{\"message\": \"Carro não encontrado ou erro ao atualizar\"}");
         }
     }
 
@@ -109,18 +117,24 @@ public class CarroServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
 
+        // Obtém o id do carro a ser deletado
         String id = request.getParameter("id");
-        Repositorio carroDao = new CarroDAO();
-        Carro carrodeletar = (Carro) carroDao.getCarro(Integer.valueOf(id));
 
-        if (id != null && carroDao.deletar(carrodeletar)) {
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().println("{\"message\": \"true\"}");
-            //resp.getWriter().println("true");
+        if (id != null && !id.isEmpty()) {
+            CarroRepositorio carroDao = new CarroDAO();
+            Carro carroDeletar = carroDao.findCarro(Integer.valueOf(id)); // Obtém o objeto Carro pelo ID
+
+            if (carroDeletar != null && carroDao.deletar(carroDeletar)) {
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().println("{\"message\": \"true\"}"); // Retorno positivo
+            } else {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                response.getWriter().println("{\"message\": \"false\"}"); // Erro se não encontrar ou não deletar
+            }
         } else {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().println("{\"message\": \"false\"}");
-            //resp.getWriter().println("false");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().println("{\"message\": \"ID do carro é necessário\"}");
         }
     }
+
 }

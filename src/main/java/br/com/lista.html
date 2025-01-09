@@ -1,104 +1,106 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Carros</title>
-    <!-- Link para o CSS do Bootstrap -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Lista de Veículos</title>
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const apiUrl = "/api-carros"; // URL do endpoint da API
 
-    <script>
-        // Função para buscar todos os carros
-        function buscarCarros() {
-            let url = "/api-carros";
+                // Função para carregar os carros e preencher a tabela
+                function carregarCarros() {
+                    fetch(apiUrl)
+                        .then(response => {
+                            if (response.ok) {
+                                return response.json(); // Converte a resposta em JSON
+                            } else {
+                                throw new Error("Erro ao carregar os carros.");
+                            }
+                        })
+                        .then(carros => {
+                            const tabelaCorpo = document.getElementById("tabela-carros-corpo");
+                            tabelaCorpo.innerHTML = ""; // Limpa a tabela antes de preenchê-la
 
-            // Faz a requisição fetch para buscar os carros
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    const tabela = document.getElementById("carrosTabela");
-                    tabela.innerHTML = ""; // Limpa a tabela antes de adicionar novos resultados
+                            const mensagem = document.getElementById("mensagem");
+                            if (Array.isArray(carros) && carros.length > 0) {
+                                mensagem.textContent = ""; // Remove a mensagem caso existam carros
+                                carros.forEach(carro => {
+                                    // Cria uma nova linha para cada carro
+                                    const linha = document.createElement("tr");
 
-                    // Preenche a tabela com os dados retornados
-                    data.forEach(carro => {
-                        const tr = document.createElement("tr");
+                                    // Adiciona colunas com os dados do carro
+                                    linha.innerHTML = `
+                                        <td>${carro.id}</td>
+                                        <td>${carro.modelo}</td>
+                                        <td>${carro.marca}</td>
+                                        <td>${carro.ano}</td>
+                                        <td>${carro.cor}</td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" onclick="deletarCarro(${carro.id})">Deletar</button>
+                                        </td>
+                                    `;
 
-                        const tdModelo = document.createElement("td");
-                        tdModelo.textContent = carro.modelo;
-                        tr.appendChild(tdModelo);
+                                    tabelaCorpo.appendChild(linha);
+                                });
+                            } else {
+                                mensagem.textContent = "Nenhum carro cadastrado."; // Exibe a mensagem
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Erro ao carregar carros:", error);
+                            alert(error.message || "Erro ao carregar os carros.");
+                        });
+                }
 
-                        const tdMarca = document.createElement("td");
-                        tdMarca.textContent = carro.marca;
-                        tr.appendChild(tdMarca);
+                // Função para deletar um carro
+                window.deletarCarro = function (id) {
+                    if (confirm("Tem certeza que deseja deletar este carro?")) {
+                        fetch(`${apiUrl}?id=${id}`, {
+                            method: "DELETE"
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    alert("Carro deletado com sucesso.");
+                                    carregarCarros(); // Recarrega a lista de carros
+                                } else {
+                                    alert("Erro ao deletar o carro.");
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Erro ao deletar carro:", error);
+                                alert(error.message || "Erro ao deletar o carro.");
+                            });
+                    }
+                };
 
-                        const tdAno = document.createElement("td");
-                        tdAno.textContent = carro.ano;
-                        tr.appendChild(tdAno);
-
-                        const tdCor = document.createElement("td");
-                        tdCor.textContent = carro.cor;
-                        tr.appendChild(tdCor);
-
-                        const tdAcoes = document.createElement("td");
-                        
-                        // Botão "Editar" com target="_blank"
-                        const btnEditar = document.createElement("button");
-                        btnEditar.textContent = "Editar";
-                        btnEditar.className = "btn btn-warning btn-sm";
-                        btnEditar.onclick = function () {
-                            // Cria a query string com os dados do carro
-                            const queryString = new URLSearchParams({
-                                modelo: carro.modelo,
-                                marca: carro.marca,
-                                ano: carro.ano,
-                                cor: carro.cor
-                            }).toString();
-
-                            // Abre a página index.html com os parâmetros em nova aba
-                            window.open(`/index.html?${queryString}`, "_blank");
-                        };
-                        tdAcoes.appendChild(btnEditar);
-                        
-                        tr.appendChild(tdAcoes);
-
-                        tabela.appendChild(tr); // Adiciona a linha na tabela
-                    });
-                })
-                .catch(error => {
-                    console.error("Erro ao buscar dados:", error);
-                });
-        }
-
-        // Função chamada quando a página é carregada para mostrar todos os carros
-        window.onload = function() {
-            buscarCarros(); // Busca todos os carros inicialmente
-        };
-    </script>
-</head>
-<body>
-    <div class="container mt-5">
-        <h2>Lista de Carros</h2>
-
-        <!-- Tabela para Exibir os Resultados -->
-        <table class="table mt-4">
-            <thead>
-                <tr>
-                    <th scope="col">Modelo</th>
-                    <th scope="col">Marca</th>
-                    <th scope="col">Ano</th>
-                    <th scope="col">Cor</th>
-                    <th scope="col">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="carrosTabela">
-                <!-- Os resultados da busca serão inseridos aqui -->
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Link para o JavaScript do Bootstrap -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
+                // Carrega os carros ao carregar a página
+                carregarCarros();
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container mt-5">
+            <h2 id="mensagem"></h2> <!-- Elemento para exibir a mensagem de "Nenhum carro cadastrado" -->
+            <h2>Lista de Veículos</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Modelo</th>
+                        <th>Marca</th>
+                        <th>Ano</th>
+                        <th>Cor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-carros-corpo">
+                    <!-- Os carros serão inseridos dinamicamente aqui -->
+                </tbody>
+            </table>
+            <!-- Botão para cadastrar novo veículo -->
+            <a href="index.html" class="btn btn-primary">Cadastrar Novo Veículo</a>
+        </div>
+    </body>
 </html>

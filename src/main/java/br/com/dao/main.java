@@ -26,7 +26,7 @@ public class main {
         repo.salvar(c2);
         //listar
         System.out.println(repo.listar());
-        //get
-        System.out.println(repo.getCarro(2));
+        repo.deletar(c2);
+        System.out.println(repo.listar());
     }
 }

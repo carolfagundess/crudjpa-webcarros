@@ -24,26 +24,41 @@ public class CarroDAO
         EntityTransaction transacao = this.manager.getTransaction();
         try {
             transacao.begin();
-            // Buscando o carro no banco de dados usando o ID
+
+            // Busca o carro existente pelo ID
             Carro carroExistente = this.manager.find(Carro.class, obj.getId());
 
             if (carroExistente != null) {
-                // Atualizando os dados do carro com os novos dados
-                carroExistente.setMarca(obj.getMarca());
-                carroExistente.setModelo(obj.getModelo());
-                carroExistente.setAno(obj.getAno());
-                // Atualize outros campos conforme necessário
+                // Atualiza apenas os campos que foram enviados (não-nulos)
+                if (obj.getMarca() != null) {
+                    carroExistente.setMarca(obj.getMarca());
+                }
+                if (obj.getModelo() != null) {
+                    carroExistente.setModelo(obj.getModelo());
+                }
+                if (obj.getAno() != 0) {
+                    carroExistente.setAno(obj.getAno());
+                }
+                if (obj.getCor() != null) {
+                    carroExistente.setCor(obj.getCor());
+                }
 
-                // O EntityManager irá atualizar automaticamente no banco de dados
+                // Persiste as alterações
                 this.manager.merge(carroExistente);
+
+                // Finaliza a transação
                 transacao.commit();
                 return true;
             } else {
-                transacao.rollback();
+                transacao.rollback(); // Não encontrou o carro, desfaz a transação
                 return false;
             }
         } catch (Exception e) {
-            transacao.rollback();
+            // Em caso de erro, desfaz a transação e imprime o erro
+            if (transacao.isActive()) {
+                transacao.rollback();
+            }
+            e.printStackTrace();
             return false;
         }
     }

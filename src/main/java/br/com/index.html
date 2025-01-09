@@ -3,8 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Formulário de Cadastro</title>
-        <!-- Link para o CSS do Bootstrap -->
+        <title>Cadastro de Veículo</title>
         <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
         <script>
             document.addEventListener("DOMContentLoaded", function () {
@@ -27,32 +26,37 @@
                         cor: cor
                     };
 
-                    // Envia os dados como JSON
+                    // Faz a requisição POST para cadastrar o carro
                     fetch("/api-carros", {
                         method: "POST",
                         headers: {
-                            "Content-Type": "application/json" // Especifica que os dados são JSON
+                            "Content-Type": "application/json"
                         },
-                        body: JSON.stringify(carro) // Converte o objeto em JSON
+                        body: JSON.stringify(carro)
                     })
-                            .then(response => response.json())
+                            .then(response => {
+                                if (response.ok) {
+                                    return response.json(); // Continua processando a resposta se for bem-sucedida
+                                } else {
+                                    return response.json().then(data => {
+                                        throw new Error(data.message || "Erro ao cadastrar o carro.");
+                                    });
+                                }
+                            })
                             .then(data => {
-                                // Manipule a resposta aqui, caso necessário
-                                console.log(data);
+                                alert("Carro cadastrado com sucesso!");
+                                form.reset(); // Limpa o formulário
+                                // Redireciona para lista.html após salvar com sucesso
+                                window.location.href = "lista.html";
                             })
                             .catch(error => {
                                 console.error("Erro ao enviar dados:", error);
+                                alert(error.message || "Erro ao cadastrar o carro.");
                             });
                 });
             });
-            document.addEventListener("DOMContentLoaded", function () {
-                const urlParams = new URLSearchParams(window.location.search);
-                document.getElementById("modelo").value = urlParams.get("modelo") || "";
-                document.getElementById("marca").value = urlParams.get("marca") || "";
-                document.getElementById("ano").value = urlParams.get("ano") || "";
-                document.getElementById("cor").value = urlParams.get("cor") || "";
-            });
         </script>
+
     </head>
     <body>
         <div class="container mt-5">
