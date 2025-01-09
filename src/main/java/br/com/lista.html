@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Carros</title>
+    <!-- Link para o CSS do Bootstrap -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <script>
+        // Função para buscar todos os carros
+        function buscarCarros() {
+            let url = "/api-carros";
+
+            // Faz a requisição fetch para buscar os carros
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const tabela = document.getElementById("carrosTabela");
+                    tabela.innerHTML = ""; // Limpa a tabela antes de adicionar novos resultados
+
+                    // Preenche a tabela com os dados retornados
+                    data.forEach(carro => {
+                        const tr = document.createElement("tr");
+
+                        const tdModelo = document.createElement("td");
+                        tdModelo.textContent = carro.modelo;
+                        tr.appendChild(tdModelo);
+
+                        const tdMarca = document.createElement("td");
+                        tdMarca.textContent = carro.marca;
+                        tr.appendChild(tdMarca);
+
+                        const tdAno = document.createElement("td");
+                        tdAno.textContent = carro.ano;
+                        tr.appendChild(tdAno);
+
+                        const tdCor = document.createElement("td");
+                        tdCor.textContent = carro.cor;
+                        tr.appendChild(tdCor);
+
+                        const tdAcoes = document.createElement("td");
+                        
+                        // Botão "Editar" com target="_blank"
+                        const btnEditar = document.createElement("button");
+                        btnEditar.textContent = "Editar";
+                        btnEditar.className = "btn btn-warning btn-sm";
+                        btnEditar.onclick = function () {
+                            // Cria a query string com os dados do carro
+                            const queryString = new URLSearchParams({
+                                modelo: carro.modelo,
+                                marca: carro.marca,
+                                ano: carro.ano,
+                                cor: carro.cor
+                            }).toString();
+
+                            // Abre a página index.html com os parâmetros em nova aba
+                            window.open(`/index.html?${queryString}`, "_blank");
+                        };
+                        tdAcoes.appendChild(btnEditar);
+                        
+                        tr.appendChild(tdAcoes);
+
+                        tabela.appendChild(tr); // Adiciona a linha na tabela
+                    });
+                })
+                .catch(error => {
+                    console.error("Erro ao buscar dados:", error);
+                });
+        }
+
+        // Função chamada quando a página é carregada para mostrar todos os carros
+        window.onload = function() {
+            buscarCarros(); // Busca todos os carros inicialmente
+        };
+    </script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Lista de Carros</h2>
+
+        <!-- Tabela para Exibir os Resultados -->
+        <table class="table mt-4">
+            <thead>
+                <tr>
+                    <th scope="col">Modelo</th>
+                    <th scope="col">Marca</th>
+                    <th scope="col">Ano</th>
+                    <th scope="col">Cor</th>
+                    <th scope="col">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="carrosTabela">
+                <!-- Os resultados da busca serão inseridos aqui -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Link para o JavaScript do Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

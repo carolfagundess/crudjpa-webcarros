@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Formulário de Cadastro</title>
+        <!-- Link para o CSS do Bootstrap -->
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const form = document.querySelector("form");
+
+                form.addEventListener("submit", function (event) {
+                    event.preventDefault(); // Impede o envio tradicional do formulário
+
+                    // Coleta os dados do formulário
+                    const modelo = document.getElementById("modelo").value;
+                    const marca = document.getElementById("marca").value;
+                    const ano = document.getElementById("ano").value;
+                    const cor = document.getElementById("cor").value;
+
+                    // Cria o objeto JSON a ser enviado
+                    const carro = {
+                        modelo: modelo,
+                        marca: marca,
+                        ano: ano,
+                        cor: cor
+                    };
+
+                    // Envia os dados como JSON
+                    fetch("/api-carros", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json" // Especifica que os dados são JSON
+                        },
+                        body: JSON.stringify(carro) // Converte o objeto em JSON
+                    })
+                            .then(response => response.json())
+                            .then(data => {
+                                // Manipule a resposta aqui, caso necessário
+                                console.log(data);
+                            })
+                            .catch(error => {
+                                console.error("Erro ao enviar dados:", error);
+                            });
+                });
+            });
+            document.addEventListener("DOMContentLoaded", function () {
+                const urlParams = new URLSearchParams(window.location.search);
+                document.getElementById("modelo").value = urlParams.get("modelo") || "";
+                document.getElementById("marca").value = urlParams.get("marca") || "";
+                document.getElementById("ano").value = urlParams.get("ano") || "";
+                document.getElementById("cor").value = urlParams.get("cor") || "";
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container mt-5">
+            <h2>Cadastro de Veículo</h2>
+            <form>
+                <div class="form-group">
+                    <label for="modelo">Modelo</label>
+                    <input name="modelo" type="text" class="form-control" id="modelo" placeholder="Digite o modelo">
+                </div>
+
+                <div class="form-group">
+                    <label for="marca">Marca</label>
+                    <input name="marca" type="text" class="form-control" id="marca" placeholder="Digite a marca">
+                </div>
+
+                <div class="form-group">
+                    <label for="ano">Ano</label>
+                    <input name="ano" type="number" class="form-control" id="ano" placeholder="Digite o ano">
+                </div>
+
+                <div class="form-group">
+                    <label for="cor">Cor</label>
+                    <input name="cor" type="text" class="form-control" id="cor" placeholder="Digite a cor">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </form>
+        </div>
+    </body>
+</html>
