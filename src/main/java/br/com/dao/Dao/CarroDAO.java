@@ -1,35 +1,54 @@
-package br.com.dao.Dao;
+package br.com.dao.dao;
 
 import br.com.dao.Entity.Carro;
-import br.com.dao.Interface.CarroRepositorio;
-import java.util.List;
 import javax.persistence.EntityTransaction;
 import javax.persistence.TypedQuery;
+import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author carol
+ * Data Access Object para a entidade Carro.
  */
-public class CarroDAO
-        extends DataAccessObject<Carro>
-        implements CarroRepositorio {
+public class CarroDAO {
 
-    //passando o tipo da classe para DAO GERAL
+    private static final Logger logger = LoggerFactory.getLogger(CarroDAO.class);
+    private EntityManager manager;
+
+    // Passando o tipo da classe para DAO GERAL
     public CarroDAO() {
-        super(Carro.class);
+        var factory = Persistence.createEntityManagerFactory("br.com.crudprojetoweb_crudjpa-webcarros_jar_1.0-SNAPSHOTPU");
+        this.manager = factory.createEntityManager();
     }
 
-    @Override
+    /**
+     * Método para salvar um Carro.
+     */
+    public boolean salvar(Carro obj) {
+        return executarTransacao(() -> {
+            this.manager.persist(obj);
+        });
+    }
+
+    /**
+     * Método para deletar um Carro.
+     */
+    public boolean deletar(Carro obj) {
+        return executarTransacao(() -> {
+            this.manager.remove(obj);
+        });
+    }
+
+    /**
+     * Método para atualizar um Carro. Apenas os campos não-nulos são
+     * atualizados.
+     */
     public boolean atualizar(Carro obj) {
-        EntityTransaction transacao = this.manager.getTransaction();
-        try {
-            transacao.begin();
-
-            // Busca o carro existente pelo ID
+        return executarTransacao(() -> {
             Carro carroExistente = this.manager.find(Carro.class, obj.getId());
-
             if (carroExistente != null) {
-                // Atualiza apenas os campos que foram enviados (não-nulos)
                 if (obj.getMarca() != null) {
                     carroExistente.setMarca(obj.getMarca());
                 }
@@ -42,49 +61,69 @@ public class CarroDAO
                 if (obj.getCor() != null) {
                     carroExistente.setCor(obj.getCor());
                 }
-
-                // Persiste as alterações
                 this.manager.merge(carroExistente);
-
-                // Finaliza a transação
-                transacao.commit();
-                return true;
-            } else {
-                transacao.rollback(); // Não encontrou o carro, desfaz a transação
-                return false;
             }
-        } catch (Exception e) {
-            // Em caso de erro, desfaz a transação e imprime o erro
-            if (transacao.isActive()) {
-                transacao.rollback();
-            }
-            e.printStackTrace();
-            return false;
-        }
+        });
     }
 
-    @Override
-    public List<Carro> buscar(Carro filtro) {
-        try {
-            // Criando uma consulta baseada no critério de busca (exemplo, buscar por marca)
-            String jpql = "SELECT c FROM Carro c WHERE c.marca = :marca";
-            return this.manager.createQuery(jpql, Carro.class)
-                    .setParameter("marca", filtro.getMarca())
-                    .getResultList();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    @Override
+    /**
+     * Método para listar todos os Carros.
+     */
     public List<Carro> listar() {
         try {
-            // Consulta que retorna todos os carros
             String jpql = "SELECT c FROM Carro c";
             TypedQuery<Carro> query = this.manager.createQuery(jpql, Carro.class);
             return query.getResultList();
         } catch (Exception e) {
+            logger.error("Erro ao listar carros", e);
             return null;
+        }
+    }
+
+    /**
+     * Método para buscar um Carro por ID utilizando Optional.
+     */
+    public Carro findId(Integer id) {
+        try {
+            Carro carro = this.manager.find(Carro.class, id);
+            return carro;
+        } catch (Exception e) {
+            logger.error("Erro ao buscar carro por ID", e);
+            return null;
+        }
+    }
+
+    /**
+     * Método para listar carros por marca.
+     */
+    public List<Carro> listarPorMarca(String marca) {
+        try {
+            String jpql = "SELECT c FROM Carro c WHERE c.marca = :marca";
+            TypedQuery<Carro> query = this.manager.createQuery(jpql, Carro.class);
+            query.setParameter("marca", marca);
+            return query.getResultList();
+        } catch (Exception e) {
+            logger.error("Erro ao listar carros por marca", e);
+            return null;
+        }
+    }
+
+    /**
+     * Método genérico para executar transações.
+     */
+    private boolean executarTransacao(Runnable transacaoOperacao) {
+        EntityTransaction transacao = this.manager.getTransaction();
+        try {
+            transacao.begin();
+            transacaoOperacao.run();
+            transacao.commit();
+            return true;
+        } catch (Exception e) {
+            if (transacao.isActive()) {
+                transacao.rollback();
+            }
+            logger.error("Erro ao executar transação", e);
+            return false;
         }
     }
 }

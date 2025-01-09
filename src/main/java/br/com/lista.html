@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
     <head>
@@ -38,6 +39,7 @@
                                         <td>${carro.ano}</td>
                                         <td>${carro.cor}</td>
                                         <td>
+                                            <button class="btn btn-warning btn-sm" onclick="window.location.href='editar-carro.html?id=${carro.id}'">Editar</button>
                                             <button class="btn btn-danger btn-sm" onclick="deletarCarro(${carro.id})">Deletar</button>
                                         </td>
                                     `;

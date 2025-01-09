@@ -1,6 +1,6 @@
 package br.com;
 
-import br.com.controle.CarroServlet;
+import br.com.controler.CarroServlet;
 import jakarta.servlet.DispatcherType;
 import java.util.EnumSet;
 import org.eclipse.jetty.server.Server;
@@ -30,7 +30,7 @@ public class WebServer {
         cors.setInitParameter(CrossOriginFilter.ALLOW_CREDENTIALS_PARAM, "true");
 
         // Adiciona o Servlet para gerenciar o CRUD
-        context.addServlet(new ServletHolder(new CarroServlet()), "/api-carros");
+        context.addServlet(new ServletHolder(new CarroServlet()), "/api-carros/*");
 
         // Configura o handler para arquivos estáticos (frontend)
         ResourceHandler resourceHandler = new ResourceHandler();

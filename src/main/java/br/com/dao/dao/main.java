@@ -1,8 +1,6 @@
-package br.com.dao;
+package br.com.dao.dao;
 
-import br.com.dao.Dao.CarroDAO;
 import br.com.dao.Entity.Carro;
-import br.com.dao.Interface.CarroRepositorio;
 
 /**
  *
@@ -11,22 +9,24 @@ import br.com.dao.Interface.CarroRepositorio;
 public class main {
     public static void main(String[] args) {
 //      possivel porque a classe carro dao é implemento da classe carrorepositorio
-        CarroRepositorio repo = new CarroDAO();
+        CarroDAO carroDao = new CarroDAO();
         
         Carro c = new Carro("Argo", "Fiat", 2021, "branco");
         
         //salvar
-        if (repo.salvar(c)) {
+        if (carroDao.salvar(c)) {
             System.out.println("Carro salvo no banco de dados");
             System.out.println(c);
         }else{
             System.out.println("Nao salvo, falha no processo");
         }
         Carro c2 = new Carro("Cheb", "fusca", 2000, "amarelo");
-        repo.salvar(c2);
+        carroDao.salvar(c2);
         //listar
-        System.out.println(repo.listar());
-        repo.deletar(c2);
-        System.out.println(repo.listar());
+        System.out.println(carroDao.listar());
+        carroDao.deletar(c2);
+        System.out.println(carroDao.listar());
+        carroDao.salvar(new Carro("parati", "chev", 2003, "branco"));
+        System.out.println(carroDao.findId(3));
     }
 }
