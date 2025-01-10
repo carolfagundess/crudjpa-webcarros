@@ -1,7 +1,7 @@
 package br.com.controler;
 
-import br.com.dao.Entity.Carro;
-import br.com.dao.dao.CarroDAO;
+import br.com.entity.Carro;
+import br.com.dao.CarroDAO;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.stream.Collectors;

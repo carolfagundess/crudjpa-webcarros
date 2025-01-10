@@ -1,6 +1,6 @@
-package br.com.dao.dao;
+package br.com.dao;
 
-import br.com.dao.Entity.Carro;
+import br.com.entity.Carro;
 import javax.persistence.EntityTransaction;
 import javax.persistence.TypedQuery;
 import java.util.List;
